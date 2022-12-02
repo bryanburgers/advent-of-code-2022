@@ -6,6 +6,10 @@ fn main() {
     let interpretation = PartOneInterpretation;
     let points = input.points(&interpretation);
     println!("{points}");
+
+    let interpretation = PartTwoInterpretation;
+    let points = input.points(&interpretation);
+    println!("{points}");
 }
 
 #[derive(Clone, Debug)]
@@ -43,8 +47,8 @@ pub struct Round {
 
 impl Round {
     pub fn points(&self, interpretation: &impl Interpretation) -> usize {
-        let opponent = interpretation.rochambeau_for_opponent(&self.opponent);
-        let recommendation = interpretation.rochambeau_for_recommendation(&self.recommendation);
+        let opponent = interpretation.rochambeau_for_opponent(self);
+        let recommendation = interpretation.rochambeau_for_recommendation(self);
         let outcome = recommendation.play(&opponent);
 
         recommendation.points() + outcome.points()
@@ -154,26 +158,59 @@ impl RochambeauOutcome {
 }
 
 pub trait Interpretation {
-    fn rochambeau_for_opponent(&self, opponent: &Opponent) -> Rochambeau;
-    fn rochambeau_for_recommendation(&self, recommendation: &Recommendation) -> Rochambeau;
+    fn rochambeau_for_opponent(&self, round: &Round) -> Rochambeau;
+    fn rochambeau_for_recommendation(&self, round: &Round) -> Rochambeau;
 }
 
 struct PartOneInterpretation;
 
 impl Interpretation for PartOneInterpretation {
-    fn rochambeau_for_opponent(&self, opponent: &Opponent) -> Rochambeau {
-        match opponent {
+    fn rochambeau_for_opponent(&self, round: &Round) -> Rochambeau {
+        match round.opponent {
             Opponent::A => Rochambeau::Rock,
             Opponent::B => Rochambeau::Paper,
             Opponent::C => Rochambeau::Scissors,
         }
     }
 
-    fn rochambeau_for_recommendation(&self, recommendation: &Recommendation) -> Rochambeau {
-        match recommendation {
+    fn rochambeau_for_recommendation(&self, round: &Round) -> Rochambeau {
+        match round.recommendation {
             Recommendation::X => Rochambeau::Rock,
             Recommendation::Y => Rochambeau::Paper,
             Recommendation::Z => Rochambeau::Scissors,
+        }
+    }
+}
+
+struct PartTwoInterpretation;
+
+impl Interpretation for PartTwoInterpretation {
+    fn rochambeau_for_opponent(&self, round: &Round) -> Rochambeau {
+        match round.opponent {
+            Opponent::A => Rochambeau::Rock,
+            Opponent::B => Rochambeau::Paper,
+            Opponent::C => Rochambeau::Scissors,
+        }
+    }
+
+    fn rochambeau_for_recommendation(&self, round: &Round) -> Rochambeau {
+        let expected_outcome = match round.recommendation {
+            Recommendation::X => RochambeauOutcome::Loss,
+            Recommendation::Y => RochambeauOutcome::Tie,
+            Recommendation::Z => RochambeauOutcome::Win,
+        };
+        let opponent = self.rochambeau_for_opponent(round);
+
+        match (opponent, expected_outcome) {
+            (Rochambeau::Rock, RochambeauOutcome::Win) => Rochambeau::Paper,
+            (Rochambeau::Rock, RochambeauOutcome::Tie) => Rochambeau::Rock,
+            (Rochambeau::Rock, RochambeauOutcome::Loss) => Rochambeau::Scissors,
+            (Rochambeau::Paper, RochambeauOutcome::Win) => Rochambeau::Scissors,
+            (Rochambeau::Paper, RochambeauOutcome::Tie) => Rochambeau::Paper,
+            (Rochambeau::Paper, RochambeauOutcome::Loss) => Rochambeau::Rock,
+            (Rochambeau::Scissors, RochambeauOutcome::Win) => Rochambeau::Rock,
+            (Rochambeau::Scissors, RochambeauOutcome::Tie) => Rochambeau::Scissors,
+            (Rochambeau::Scissors, RochambeauOutcome::Loss) => Rochambeau::Paper,
         }
     }
 }
@@ -189,5 +226,14 @@ mod tests {
         let interpretation = PartOneInterpretation;
         let points = input.points(&interpretation);
         assert_eq!(points, 15);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = include_str!("example.txt");
+        let input = input.parse::<Input>().unwrap();
+        let interpretation = PartTwoInterpretation;
+        let points = input.points(&interpretation);
+        assert_eq!(points, 12);
     }
 }
