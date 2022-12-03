@@ -67,7 +67,7 @@ impl Rucksack {
             }
         }
 
-        let transmuted = unsafe { std::mem::transmute(slice) };
+        let transmuted = unsafe { &*(slice as *const [u8] as *const [Item] as *const Rucksack) };
         Ok(transmuted)
     }
 
@@ -107,7 +107,7 @@ pub struct Compartment([Item]);
 
 impl Compartment {
     pub fn from_slice(slice: &[Item]) -> &Compartment {
-        unsafe { std::mem::transmute(slice) }
+        unsafe { &*(slice as *const [Item] as *const Compartment) }
     }
 
     pub fn as_slice(&self) -> &[Item] {
@@ -115,7 +115,7 @@ impl Compartment {
     }
 
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe { std::mem::transmute(self) }
+        unsafe { &*(self as *const Compartment as *const [Item] as *const [u8]) }
     }
 
     pub fn as_str(&self) -> &str {
