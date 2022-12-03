@@ -11,6 +11,9 @@ fn main() {
 
     let part_one = part_one(&rucksacks);
     println!("{part_one}");
+
+    let part_two = part_two(&rucksacks);
+    println!("{part_two}");
 }
 
 fn part_one(input: &[&Rucksack]) -> usize {
@@ -21,6 +24,35 @@ fn part_one(input: &[&Rucksack]) -> usize {
         let item = common_items.into_iter().next().unwrap();
         sum += item.priority() as usize;
     }
+    sum
+}
+
+fn part_two(input: &[&Rucksack]) -> usize {
+    let mut sum = 0;
+
+    fn common_items(one: &Rucksack, two: &Rucksack, three: &Rucksack) -> BTreeSet<Item> {
+        let set1 = one.as_slice().iter().copied().collect::<BTreeSet<Item>>();
+        let set2 = two.as_slice().iter().copied().collect::<BTreeSet<Item>>();
+        let set3 = three.as_slice().iter().copied().collect::<BTreeSet<Item>>();
+
+        let int1 = set1
+            .intersection(&set2)
+            .copied()
+            .collect::<BTreeSet<Item>>();
+        int1.intersection(&set3).copied().collect()
+    }
+
+    for arr in input.chunks(3) {
+        assert_eq!(arr.len(), 3);
+        let one = arr[0];
+        let two = arr[1];
+        let three = arr[2];
+        let common_items = common_items(one, two, three);
+        assert_eq!(common_items.len(), 1);
+        let common_item = common_items.into_iter().next().unwrap();
+        sum += common_item.priority() as usize;
+    }
+
     sum
 }
 
@@ -186,5 +218,19 @@ mod tests {
 
         let part_one = part_one(&rucksacks);
         assert_eq!(part_one, 157);
+    }
+
+    #[test]
+    fn test_part_two() {
+        let input = include_str!("example.txt");
+        let rucksacks: Vec<&Rucksack> = input
+            .trim()
+            .lines()
+            .map(|line| Rucksack::from_slice(line.as_bytes()))
+            .collect::<Result<_, _>>()
+            .unwrap();
+
+        let part_two = part_two(&rucksacks);
+        assert_eq!(part_two, 70);
     }
 }
