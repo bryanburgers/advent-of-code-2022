@@ -35,14 +35,14 @@ fn main() {
 
 fn part_1(mut dock: Dock, commands: &[Command]) -> String {
     for command in commands {
-        dock.handle_command(&command);
+        dock.handle_command(command);
     }
     dock.tops()
 }
 
 fn part_2(mut dock: Dock, commands: &[Command]) -> String {
     for command in commands {
-        dock.handle_command_v2(&command);
+        dock.handle_command_v2(command);
     }
     dock.tops()
 }
@@ -54,9 +54,9 @@ struct Dock {
 
 impl Dock {
     pub fn move_one(&mut self, source: usize, destination: usize) {
-        let mut source_stack = &mut self.stacks[source];
+        let source_stack = &mut self.stacks[source];
         let c = source_stack.pop();
-        let mut destination_stack = &mut self.stacks[destination];
+        let destination_stack = &mut self.stacks[destination];
         destination_stack.push(c);
     }
 
@@ -69,12 +69,12 @@ impl Dock {
     }
 
     pub fn move_multiple_v2(&mut self, source: usize, destination: usize, count: usize) {
-        let mut source_stack = &mut self.stacks[source];
+        let source_stack = &mut self.stacks[source];
         let mut queue = VecDeque::with_capacity(count);
         for _ in 0..count {
             queue.push_front(source_stack.pop());
         }
-        let mut dest_stack = &mut self.stacks[destination];
+        let dest_stack = &mut self.stacks[destination];
         for _ in 0..count {
             dest_stack.push(queue.pop_front().unwrap());
         }
@@ -160,7 +160,7 @@ mod tests {
     fn test_part_1() {
         let input = include_str!("example.txt");
         let commands = parse_commands(input);
-        let mut dock = Dock::from_stacks([stack!('N', 'Z'), stack!('D', 'C', 'M'), stack!('P')]);
+        let dock = Dock::from_stacks([stack!('N', 'Z'), stack!('D', 'C', 'M'), stack!('P')]);
 
         let result = part_1(dock, &commands);
         assert_eq!(result, "CMZ");
@@ -170,7 +170,7 @@ mod tests {
     fn test_part_2() {
         let input = include_str!("example.txt");
         let commands = parse_commands(input);
-        let mut dock = Dock::from_stacks([stack!('N', 'Z'), stack!('D', 'C', 'M'), stack!('P')]);
+        let dock = Dock::from_stacks([stack!('N', 'Z'), stack!('D', 'C', 'M'), stack!('P')]);
 
         let result = part_2(dock, &commands);
         assert_eq!(result, "MCD");
