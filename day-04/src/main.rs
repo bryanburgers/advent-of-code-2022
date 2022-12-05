@@ -10,12 +10,24 @@ fn main() {
         .unwrap();
     let result = part_1(&input);
     println!("{result}");
+    let result = part_2(&input);
+    println!("{result}");
 }
 
 fn part_1(input: &[Pair]) -> usize {
     let mut count = 0;
     for pair in input {
         if pair.first.contains(&pair.second) || pair.second.contains(&pair.first) {
+            count += 1;
+        }
+    }
+    count
+}
+
+fn part_2(input: &[Pair]) -> usize {
+    let mut count = 0;
+    for pair in input {
+        if pair.first.overlaps(&pair.second) {
             count += 1;
         }
     }
@@ -30,6 +42,13 @@ pub struct Range {
 impl Range {
     pub fn contains(&self, other: &Range) -> bool {
         self.min <= other.min && self.max >= other.max
+    }
+
+    pub fn overlaps(&self, other: &Range) -> bool {
+        (self.min <= other.min && other.min <= self.max)
+            || (self.min <= other.max && other.max <= self.max)
+            || self.contains(other)
+            || other.contains(self)
     }
 }
 
@@ -75,5 +94,18 @@ mod tests {
             .unwrap();
         let result = part_1(&input);
         assert_eq!(result, 2);
+    }
+
+    #[test]
+    pub fn test_part_2() {
+        let input = include_str!("example.txt");
+        let input = input
+            .trim()
+            .lines()
+            .map(|line| line.parse::<Pair>())
+            .collect::<Result<Vec<Pair>, _>>()
+            .unwrap();
+        let result = part_2(&input);
+        assert_eq!(result, 4);
     }
 }
