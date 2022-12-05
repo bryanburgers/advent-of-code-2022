@@ -70,14 +70,9 @@ impl Dock {
 
     pub fn move_multiple_v2(&mut self, source: usize, destination: usize, count: usize) {
         let source_stack = &mut self.stacks[source];
-        let mut queue = VecDeque::with_capacity(count);
-        for _ in 0..count {
-            queue.push_front(source_stack.pop());
-        }
+        let on_crane = source_stack.pop_stack(count);
         let dest_stack = &mut self.stacks[destination];
-        for _ in 0..count {
-            dest_stack.push(queue.pop_front().unwrap());
-        }
+        dest_stack.push_stack(on_crane);
     }
 
     pub fn handle_command_v2(&mut self, command: &Command) {
@@ -110,6 +105,20 @@ impl Stack {
 
     pub fn pop(&mut self) -> char {
         self.0.pop_front().unwrap()
+    }
+
+    pub fn pop_stack(&mut self, size: usize) -> Stack {
+        let mut queue = VecDeque::with_capacity(size);
+        for _ in 0..size {
+            queue.push_back(self.pop());
+        }
+        Stack(queue)
+    }
+
+    pub fn push_stack(&mut self, mut stack: Stack) {
+        while let Some(c) = stack.0.pop_back() {
+            self.push(c)
+        }
     }
 
     pub fn peek(&self) -> char {
