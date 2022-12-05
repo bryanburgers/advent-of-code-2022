@@ -27,13 +27,22 @@ fn main() {
     ]);
     let input = include_str!("input.txt");
     let commands = parse_commands(input);
-    let result = part_1(dock, &commands);
+    let result = part_1(dock.clone(), &commands);
+    println!("{result}");
+    let result = part_2(dock, &commands);
     println!("{result}");
 }
 
 fn part_1(mut dock: Dock, commands: &[Command]) -> String {
     for command in commands {
         dock.handle_command(&command);
+    }
+    dock.tops()
+}
+
+fn part_2(mut dock: Dock, commands: &[Command]) -> String {
+    for command in commands {
+        dock.handle_command_v2(&command);
     }
     dock.tops()
 }
@@ -57,6 +66,24 @@ impl Dock {
         for _ in 0..command.count {
             self.move_one(source, destination);
         }
+    }
+
+    pub fn move_multiple_v2(&mut self, source: usize, destination: usize, count: usize) {
+        let mut source_stack = &mut self.stacks[source];
+        let mut queue = VecDeque::with_capacity(count);
+        for _ in 0..count {
+            queue.push_front(source_stack.pop());
+        }
+        let mut dest_stack = &mut self.stacks[destination];
+        for _ in 0..count {
+            dest_stack.push(queue.pop_front().unwrap());
+        }
+    }
+
+    pub fn handle_command_v2(&mut self, command: &Command) {
+        let source = command.source;
+        let destination = command.destination;
+        self.move_multiple_v2(source, destination, command.count);
     }
 
     pub fn tops(&self) -> String {
@@ -137,5 +164,15 @@ mod tests {
 
         let result = part_1(dock, &commands);
         assert_eq!(result, "CMZ");
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = include_str!("example.txt");
+        let commands = parse_commands(input);
+        let mut dock = Dock::from_stacks([stack!('N', 'Z'), stack!('D', 'C', 'M'), stack!('P')]);
+
+        let result = part_2(dock, &commands);
+        assert_eq!(result, "MCD");
     }
 }
