@@ -1,0 +1,217 @@
+<!doctype html>
+<html>
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"> 
+
+    <style>
+        html, body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            background: #333;
+            color: white;
+        }
+        body {
+            max-width: 768px;
+            margin: 0 auto;
+        }
+        #canvas {
+            margin: 1em 0;
+            padding: 0;
+            width: 768px;
+            height: 768px;
+        }
+        textarea, select {
+            box-sizing: border-box;
+        }
+        textarea {
+            background: transparent;
+            font-family: 'Roboto', monospace;
+            font-size: 12px;
+            color: white;
+            border: none;
+            width: 100%;
+        }
+        p {
+            margin: 1em 0;
+            font-size: 12px;
+            color: white;
+            font-family: 'Roboto', monospace;
+        }
+    </style>
+</head>
+<body>
+    <p>advent of code 2022, day 06</p>
+    <div>
+        <canvas id="canvas" width="768" height="768"></canvas>
+    </div>
+    <div>
+        <textarea id="input" rows="5">jfnjjwbbqttplpvllqgllmdllfmllscssqmqzmmwzznqnwqnwnqnjjbdbpbtbdbzzzljljzjjpccrmmppzfpzfpfnfccfbbcqcrcffblfbftbfbtbwwwmgwmgmnngnllnfllhghcghhjppchcfcnfffllmmqbmmpwwwwlqwwqgqcqsqjqpqzqqdzdtztltslsljjfqfcqqgbqqqghqgqvgvrggqwggrgjgmmnrmmzgmzgzpzjjctcmtcmcnndppcvpvrrwvrvhrvhrhjhnjnvjnjrjggccvffnqqvfqvvnmvmqmfmfqqzfzbfzzzgpzpllrwwnpwpnwnwgwhhrrdnrrdjjzjszsjjbddcdbbvmbmqbqnbqbsqbsqqwbwhwggssdnnmttvnnvmnmhmfhhjchcttzdzdqqszzcwwhhwzhwhphqhcqqsggddfmmvzmzwmwfwzwrrbmrrnwnfnwnlwnwrwfwnnmtnnzwnwdnnbhhrphrhlhwllpmmbcbtbffmqffddjnjwwzpzfpptbbqqwbwzbzjbjmjljblbtlblqqhqbqggrngrgllbmbccmhmqmqwwqcqssqzzfjzjrjnnqrqssfnsnvvtgvvmsvsqqljjbsbrrjllvfvzfzmzhzzhthjhshlslfljfjqjpqpvvmpmhpmhmqqmmdwmddppjlplhlsstlssgnggrbblggffcdfdzzwqqtztqtwqtwtzzsjsbszsbsvbvwwjqjnnpdpccwssvdsdzzqbqbtbtqtmtltltvlvddzwzzfpzpjpgphprpgpqqwppdwpdplddvffcdffvpvqqgvqgvvrfvrvqrrcjcpjjpttftqqvjqvqsvqsvqssdpdbbbmcmscsddbhhgttwhhjlltqllnqntqtsscnntwwhswswlwggldltlttsjszsnznsznzccbtbblplnnmfmqmrrvjvhjhzhnzzgnnhrrdrllblpbllfdfjjssvnssvlsllnqqhwqhhhsgstsjstthrrhrghrhhfmhmwhwrwwsrwrfwwdnntqnnsvnvmnnfvnntztqzqhqnqjnnjfflbfllrsllqhqdqccgvgnvvcwcfccmssqnqhhqrrfrtrvvnjnpjnjjpplmlppvmpphjhppvhvdvssjcjrrtrdrrsvvbbjzzrtztgzghzhccwmccshhzbhhdwdwsdswwlcwllpblpphrppfhfnffrbbcgcmggnvnzzmvvcrrftrftrffcscvcsslbljlglzgzbzczszmsmbmnbbhdhvvsqvqhvvfrfddbpwgvztwwqcpzhhwnhphnrwldjmztsptbbgsqbqqccwbdqzvhfjlfldgphzbfprclgpfztbrgvsvfpghmdchscbdqjqgzvmrtdrfzbhgdvgznjcsmglcfwhdtpsljnvvzjcbbrczwtgpdmgpzhctvbbmvsjzthffsjqhfsdrclpqslbhnmpczwvggpzbjcchfjzjhhgtrmlgnzlndfvzrccgggrpmprbmjbfjjhzrhrtwgqdbgdlqghssrnmtmpvttcqwnwdzhgfnddgbqcsdvzvwqdnmmpwrwhfbqtcpqhvwbczrmjqzsntvdrncwjsmvvwcngrtlwtjmnctwrrtvphbjhlqmgzfsfsrblzzvmzlbhzjhwbdfpncdrfchmrqhspdszcjrnvwtmjzmsmzcdphsdzjgqswwrpdvlpvrdnhplnlmswvcrzlcmbtqtscjfwrnrctrvdqcqzwcvgvpdgrndrgsrvzftwpqjjgjhzwhvrjlqntdtcjdrqzhqlqqdffcgvttlhvwgggnwmdlvghfgjpsmntbvbjbbttrwsljwsrvtmznvqdptpwtdcwtcsfdjlmdqthqggjcptrqhbsbjzqqmvvjmgmppqmjmnjdqvspzlbgzjsjshpslmszqnzghsszpsmpzfcrqqjdwvtbnzstvvjzvtzgpptcmvmbvmpvpzvgfnwtlmdzhvhshtwvnbgwmtzqhcptflpqsqvmptchpfcbwhvjzdcnsnqrgdwfcthqfssnbqnvgvvhlzqfqmdlcwnshtvhhhpghjbmhdbfbqcvbnbvwbzcbbmjnrqmsdqnmnbsrvhggzsrlbwtfmgwrnlhrbrrrqdcspnrpnppngrtdqtbmbhcbjrlhpfjpdnfndmqvwvhlgmsntpwrlrwwqhwvzbpzqqggnbqlsjjqtbqjcdpmndgmtdhfbqrpdzzsnmhzmqqnbdqftqmnhfbdzdlfwgjsjhrcsmtfzgwbvbbzdrlbmcgmppqfppmbqrnsmrmhrdsvgcfmzpfnvrbbgfccfcbphszwdbnnwcjjvvlpdtfzgtslvgqwmsvlpzjcbqwqclrjrsgthhtqrqrhvsdfjntgllsvslrvdtnsdmrgtqcmswnqwlrwlfmcfftbjpvdnmczqzldsssszhjtqtqvqtwhjcqchjvqvntvzzzprbmjcctsqfdcvpbtsgnnsqtqnmjhrgqcjnzrdsgrbtdpqjbgcmnfwhnsrfwcdmncjzwcngfbmmrsbvgvvqpvrdjfsqwjdmqjdpzcbjjfmzjjgbnwqgrvpmbzdhsgtldrzvglscfwbmjltcrzrgdslgprwscwbrhtdtglznjdcvfjzjjqzntdqdbcrcbbmvnzdshjzcsfsgpghmgdqdwsnwjtvtbqbqccbcwjpnhdhzcvdssvnvqtvzwprhpgftdwwvgsbnlzzjppcrrwmrsthvjjrvrsdrbdqfgsjsmwfplpstrbnpdhhcblhjfwzngmhlwbvnfcbgwshspsbbgbldrvmcnczszpgnddrfwrtgcqjggrrcbjwrdjlrvtspbftrtjbzjwchpfnjctcjtwtpmtblczcftqlphdjczfrvtzlsglpvhqsqqblttdjrlczhrqsgpggmvnhpqtrfbpgvzftwtsmwhwswtpvtwnsshmlcffpcjshqhqqsjtpbgszscmcbnhjjtjmpgfdhgmljqmmwlfptstjjvqhcbjpjpwzwqflhslclzzjlmcttbsncqmfzhgnzwbdtnvfwbtztwbhtfsqjfzwmfflmbwnqzqhcjwdpbvngsgzlwvwcqhqjsndznbbdcqqhmjjpqjbsnvwztgmqwdcbbjvcndmhsbvbjnzlbscmgnjcrrwrfdljtcsgmwtffgcjflpzzdcnzvmrbnrjbbmhzqqjtgsrwqmmrhpndwlbnrtrhhpqlmdrcrtdmzsslrmffpftdjvfcpvvhzhjhqtrrsclvtbsccgmmqrjbqgbmpnbzlsncssdhmjppjptvddfgbbnjzjjldjlqjzhhttsclrmsgzctwjqqvtjlfzwgtffgrdjzwdcnrprlcswffghngrqcgsbzqhhvbfjtwcjlrrmbtqjdrgpnbftnmzqnndnqwgrqndlwmjnnspbhjlnzrnptnrmcjhpbfcqpvbchvdwthjlcrfpssgtfbsgfrftcrwttrspbsvzpvcczmdqslcdgfljvtjsdpjnwmdvfzfllrdrbgvpltzlqcrlwbncswhfvrdthspmhfhfdlvpbcqlmjfznhnqblffftgzqrtswnmtnvjprqqhhhvrscvbbzgmnlnprghfdjqbgjppjzjrnclfdssbmgspwcscnlcrrqmtlljrmcwgdgcqwvvjzvsjdjvsspszlcthwzrwqtzdgmqvnlvvzrvrpqqwswzcchncrpnjdmflvmhhwvrrstpvnszfrmvpdtpqpbdmwvvbbpjnwmtststtlcvqdnvqqphzlhhzbbbjssgdcnhlmwrzwvwmcmgrcngqzcnffqzfnvldpdjmsspgpbrzhnszfnljfcrgsjvqjjbstvghlcslhqlzhltpglwffrzfgjghssfgrptbnpbhqnhhfbjsnmsvltqpthdmzzrhrhhmzlplvrtdqfrfrppdpqnllblcfjqpdwznsbrhcncdpmztcrjrfnlwtznrmpbzqsbrqrbnthgfpshrdhnwjmrnsmsfqwdjsmsvhfrbdpjrwcvmdvvmdtfqjgmdsrqtctsdmznngbsrfjvhllgwt</textarea>
+    </div>
+    <div>
+        <label><input type="checkbox" id="include_invalid" checked> Include invalid states</label>
+    </div>
+    <div>
+        <select id="frequency">
+            <option value="1000">1 fps</option>
+            <option value="500">2 fps</option>
+            <option value="250">4 fps</option>
+            <option value="100">10 fps</option>
+            <option value="75" selected>13.3 fps</option>
+            <option value="50">20 fps</option>
+            <option value="20">50 fps</option>
+        </select>
+    </div>
+
+    <script>
+        async function init() {
+            let paused = false;
+            
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.font = `24px 'Roboto Mono',monospace`
+
+            const input = document.getElementById('input');
+            const includeInvalid = document.getElementById('include_invalid');
+            const frequency = document.getElementById('frequency');
+
+            let canvasWidth;
+            let canvasHeight;
+            let devicePixelRatio = window.devicePixelRatio;
+            canvasWidth = 768 * devicePixelRatio;
+            canvasHeight = 768 * devicePixelRatio;
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            let memory = null;
+            let visualizer = null;
+            let inteval = null;
+
+            const boxSize = {
+                basicWidth: 12,
+                basicHeight: 12,
+
+                width() {
+                    return this.basicWidth * devicePixelRatio;
+                },
+                height() {
+                    return this.basicHeight * devicePixelRatio;
+                },
+
+                left(x) {
+                    return x * this.width();
+                },
+                right(x) {
+                    return (x + 1) * this.width();
+                },
+                midX(x) {
+                    return (x + 0.5) * this.width();
+                },
+                top(y) {
+                    return y * this.height();
+                },
+                bottom(y) {
+                    return (y + 1) * this.height();
+                },
+                midY(x) {
+                    return (x + 0.5) * this.height();
+                },
+            };
+
+            const importObject = {
+                env: {
+                    draw_byte: (x, y, byte) => {
+                        ctx.save();
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'top';
+                        ctx.font = `${12 * devicePixelRatio}px 'Roboto Mono',monospace`;
+                        const decoder = new TextDecoder();
+                        const bytes = new Uint8Array([byte]);
+                        let text = decoder.decode(bytes);
+                        const middleX = boxSize.midX(x);
+                        const top = boxSize.top(y);
+                        ctx.fillText(text, middleX, top)
+                        ctx.restore();
+                    },
+                    fill_box: (x, y) => {
+                        ctx.fillRect(boxSize.left(x), boxSize.top(y), boxSize.width(), boxSize.height());
+                    },
+                    clear: (x, y) => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height)
+                    },
+                    run_found: (start, end) => {
+                        console.log(`Found run from ${start} to ${end}`)
+                    },
+                    fill_color_rgb: (r, g, b) => {
+                        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
+                    },
+                    console_log: (ptr, len) => {
+                        const textDecoder = new TextDecoder();
+                        const dataView = new Uint8Array(memory.buffer, ptr, len);
+                        const text = textDecoder.decode(dataView);
+                        console.log(`wasm: ${text}`)
+                    }
+                }
+            }
+
+            const wasm = await WebAssembly.instantiateStreaming(fetch('aoc2022-06.wasm'), importObject);
+            memory = wasm.instance.exports.memory;
+
+            input.addEventListener('change', e => {
+                visualizer = reinit(visualizer);
+            }, false);
+            
+            function reinit(previousVisualizer) {
+                if (previousVisualizer !== null) {
+                    wasm.instance.exports.visualization_free(previousVisualizer);
+                }
+
+                const text = input.value;
+
+                const visualizer = wasm.instance.exports.visualization_create(text.length);
+
+                const byteAddress = wasm.instance.exports.visualization_bytes_address(visualizer);
+                console.log(`started. visualizer=${visualizer} byte_address=${byteAddress}`)
+                
+                const encoder = new TextEncoder();
+                const textBuffer = memory.buffer.slice(byteAddress);
+                const dataView = new Uint8Array(memory.buffer, byteAddress, text.length);
+                const stats = encoder.encodeInto(text, dataView)
+
+                wasm.instance.exports.visualization_bytes_set(visualizer, stats.written);
+
+                return visualizer;
+            }
+
+            visualizer = reinit(visualizer);
+            function intervalFunction() {
+                if (visualizer) {
+                    let done = wasm.instance.exports.visualization_tick(visualizer, includeInvalid.checked);
+                    if (done) {
+                        wasm.instance.exports.visualization_free(visualizer);
+                        visualizer = null;
+                    }
+                } else {
+                    visualizer = reinit(visualizer);
+                }
+            }
+
+
+            interval = setInterval(intervalFunction, parseInt(frequency.value));
+
+            frequency.addEventListener('change', () => {
+                clearInterval(interval);
+                interval = setInterval(intervalFunction, parseInt(frequency.value));
+            }, false)
+        }
+
+        init().catch(err => {
+            console.log(err)
+        })
+
+        
+    </script>
+</body>
+</html>
