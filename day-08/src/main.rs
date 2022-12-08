@@ -3,6 +3,8 @@ fn main() {
     let naive = Naive::from_input(input.trim());
     let visible = naive.num_visible();
     println!("{visible}");
+    let scenic_score = naive.best_scenic_score();
+    println!("{scenic_score}");
 }
 
 struct Naive<'a> {
@@ -82,6 +84,64 @@ impl<'a> Naive<'a> {
         }
         count
     }
+
+    pub fn scenic_score(&self, x: usize, y: usize) -> usize {
+        let height = self.byte_at_point(x, y);
+        let mut score_left = 0;
+        for x in (0..x).rev() {
+            let h = self.byte_at_point(x, y);
+            score_left += 1;
+
+            if h >= height {
+                break;
+            }
+        }
+
+        let mut score_right = 0;
+        for x in (x + 1)..self.len() {
+            let h = self.byte_at_point(x, y);
+            score_right += 1;
+
+            if h >= height {
+                break;
+            }
+        }
+
+        let mut score_above = 0;
+        for y in (0..y).rev() {
+            let h = self.byte_at_point(x, y);
+            score_above += 1;
+
+            if h >= height {
+                break;
+            }
+        }
+
+        let mut score_below = 0;
+        for y in (y + 1)..self.len() {
+            let h = self.byte_at_point(x, y);
+            score_below += 1;
+
+            if h >= height {
+                break;
+            }
+        }
+
+        score_left * score_right * score_above * score_below
+    }
+
+    pub fn best_scenic_score(&self) -> usize {
+        let mut best = 0;
+        for x in 0..self.len() {
+            for y in 0..self.len() {
+                let current = self.scenic_score(x, y);
+                if current > best {
+                    best = current
+                }
+            }
+        }
+        best
+    }
 }
 
 #[cfg(test)]
@@ -94,5 +154,20 @@ mod tests {
         let naive = Naive::from_input(input.trim());
         let visible = naive.num_visible();
         assert_eq!(visible, 21);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = include_str!("example.txt");
+        let naive = Naive::from_input(input.trim());
+
+        let first_example = naive.scenic_score(2, 1);
+        assert_eq!(first_example, 4);
+
+        let second_example = naive.scenic_score(2, 3);
+        assert_eq!(second_example, 8);
+
+        let visible = naive.best_scenic_score();
+        assert_eq!(visible, 8);
     }
 }
