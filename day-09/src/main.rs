@@ -9,6 +9,8 @@ fn main() {
     let commands = Command::parse(input).unwrap();
     let result = part_1(&commands);
     println!("{result}");
+    let result = part_2(&commands);
+    println!("{result}");
 }
 
 fn part_1(commands: &[Command]) -> usize {
@@ -22,6 +24,26 @@ fn part_1(commands: &[Command]) -> usize {
             *head.position_mut() += vector;
             tail.move_toward_head(&head);
             tail_positions.insert(tail.position());
+        }
+    }
+    tail_positions.len()
+}
+
+fn part_2(commands: &[Command]) -> usize {
+    let mut head = Head(Position::default());
+    let mut tails = vec![Tail(Position::default()); 9];
+
+    let mut tail_positions = HashSet::new();
+    for command in commands {
+        let vector = command.unit_vector();
+        for _ in 0..command.count() {
+            *head.position_mut() += vector;
+            tails[0].move_toward_position(head.position());
+            for i in 1..tails.len() {
+                let previous_position = tails[i - 1].position();
+                tails[i].move_toward_position(previous_position);
+            }
+            tail_positions.insert(tails.last().unwrap().position());
         }
     }
     tail_positions.len()
@@ -86,7 +108,7 @@ impl Head {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Copy, Clone)]
 struct Tail(Position);
 
 #[derive(Debug, Copy, Clone)]
@@ -145,7 +167,11 @@ impl Command {
 
 impl Tail {
     pub fn move_toward_head(&mut self, head: &Head) {
-        let relative = head.position() - self.position();
+        self.move_toward_position(head.position())
+    }
+
+    pub fn move_toward_position(&mut self, position: Position) {
+        let relative = position - self.position();
         if -1 <= relative.x && relative.x <= 1 && -1 <= relative.y && relative.y <= 1 {
             return;
         }
@@ -221,5 +247,18 @@ mod tests {
         let commands = Command::parse(input).unwrap();
         let result = part_1(&commands);
         assert_eq!(result, 13);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = include_str!("example.txt");
+        let commands = Command::parse(input).unwrap();
+        let result = part_2(&commands);
+        assert_eq!(result, 1);
+
+        let input = include_str!("example2.txt");
+        let commands = Command::parse(input).unwrap();
+        let result = part_2(&commands);
+        assert_eq!(result, 36);
     }
 }
