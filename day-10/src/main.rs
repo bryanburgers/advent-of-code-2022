@@ -1,4 +1,7 @@
-use std::{fmt::Debug, str::FromStr};
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -9,6 +12,8 @@ fn main() {
         .unwrap();
     let result = part_1(&input);
     println!("{result}");
+    let result = part_2(&input);
+    println!("{result}");
 }
 
 fn part_1(input: &[Instruction]) -> isize {
@@ -17,6 +22,15 @@ fn part_1(input: &[Instruction]) -> isize {
         .filter(|tick| tick.cycle % 40 == 20 && tick.cycle <= 220)
         .map(|tick| tick.signal_strength())
         .sum()
+}
+
+fn part_2(input: &[Instruction]) -> Crt {
+    let computer = Computer::new(input);
+    let mut crt = Crt::default();
+    for tick in computer {
+        crt.set(tick.crt_row(), tick.crt_column(), tick.in_sprite());
+    }
+    crt
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -131,6 +145,62 @@ impl Tick {
     fn signal_strength(&self) -> isize {
         self.cycle * self.value
     }
+
+    fn crt_row(&self) -> isize {
+        (self.cycle - 1) / 40
+    }
+
+    fn crt_column(&self) -> isize {
+        (self.cycle - 1) % 40
+    }
+
+    fn in_sprite(&self) -> bool {
+        let column = self.crt_column();
+        self.value - 1 <= column && column <= self.value + 1
+    }
+}
+
+struct Crt {
+    pixels: [[bool; 40]; 6],
+}
+
+impl Crt {
+    fn set(&mut self, row: isize, column: isize, value: bool) {
+        if row < 0 || row >= 6 || column < 0 || column >= 40 {
+            return;
+        }
+        self.pixels[row as usize][column as usize] = value;
+    }
+}
+
+impl Default for Crt {
+    fn default() -> Self {
+        let pixels = [
+            [false; 40],
+            [false; 40],
+            [false; 40],
+            [false; 40],
+            [false; 40],
+            [false; 40],
+        ];
+        Self { pixels }
+    }
+}
+
+impl Display for Crt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for y in 0..6 {
+            for x in 0..40 {
+                if self.pixels[y][x] {
+                    f.write_str("#")?;
+                } else {
+                    f.write_str(".")?;
+                }
+            }
+            f.write_str("\n")?;
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -227,5 +297,30 @@ mod tests {
             .unwrap();
         let result = part_1(&input);
         assert_eq!(result, 13140);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let expected_output = r#"
+##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....
+"#
+        .trim_start();
+
+        let input = include_str!("example.txt");
+        let input = input
+            .trim()
+            .lines()
+            .map(|line| line.parse::<Instruction>())
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+
+        let result = part_2(&input);
+
+        assert_eq!(result.to_string(), expected_output);
     }
 }
