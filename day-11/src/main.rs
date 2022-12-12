@@ -1,8 +1,10 @@
-use std::{collections::VecDeque, str::FromStr};
+use std::{collections::VecDeque, fmt::Debug, str::FromStr};
 
 fn main() {
     let monkeys = parse_input(include_str!("input.txt")).unwrap();
     let result = part_1(monkeys.clone());
+    println!("{result}");
+    let result = part_2(monkeys);
     println!("{result}");
 }
 
@@ -13,7 +15,7 @@ fn parse_input(input: &str) -> Result<Vec<Monkey>, &'static str> {
 
 fn part_1(mut monkeys: Vec<Monkey>) -> usize {
     for _ in 0..20 {
-        round(&mut monkeys);
+        round(&mut monkeys, Worry::Regular);
     }
 
     let mut number_inspected = monkeys
@@ -24,40 +26,65 @@ fn part_1(mut monkeys: Vec<Monkey>) -> usize {
     number_inspected.into_iter().take(2).product()
 }
 
-fn round(monkeys: &mut Vec<Monkey>) {
+fn part_2(mut monkeys: Vec<Monkey>) -> usize {
+    for _ in 0..10_000 {
+        round(&mut monkeys, Worry::Extreme);
+    }
+
+    let mut number_inspected = monkeys
+        .iter()
+        .map(|monkey| monkey.inspected)
+        .collect::<Vec<_>>();
+    number_inspected.sort_by(|a, b| a.cmp(b).reverse());
+    number_inspected.into_iter().take(2).product()
+}
+
+fn round(monkeys: &mut Vec<Monkey>, worry_level: Worry) {
     for i in 0..monkeys.len() {
         let monkey = monkeys.get_mut(i).unwrap();
-        let throws = monkey.turn();
+        let throws = monkey.turn(worry_level);
         for throw in throws {
-            let mut other_monkey = monkeys.get_mut(throw.monkey.0).unwrap();
+            let other_monkey = monkeys.get_mut(throw.monkey.0).unwrap();
             other_monkey.items.push_back(throw.item);
         }
     }
+}
+
+#[derive(Copy, Clone)]
+enum Worry {
+    /// Your worry level divides by 3 after each inspection
+    Regular,
+    /// Your worry level does not divide by 3 after each inspection
+    Extreme,
 }
 
 #[derive(Clone)]
 struct Monkey {
     items: VecDeque<Item>,
     operation: Operation,
-    test: i32,
+    test: i64,
     if_true: OtherMonkey,
     if_false: OtherMonkey,
     inspected: usize,
 }
 
 impl Monkey {
-    pub fn turn(&mut self) -> Vec<Throw> {
+    pub fn turn(&mut self, worry_level: Worry) -> Vec<Throw> {
         let mut throws = Vec::with_capacity(self.items.len());
-        while let Some(throw) = self.throw() {
+        while let Some(throw) = self.throw(worry_level) {
             throws.push(throw);
         }
         throws
     }
 
-    pub fn throw(&mut self) -> Option<Throw> {
+    pub fn throw(&mut self, worry_level: Worry) -> Option<Throw> {
         let item = self.items.pop_front()?;
-        let item = self.operation.apply(item);
-        let item = item.relief();
+        let mut item = self.operation.apply(item);
+        if matches!(worry_level, Worry::Regular) {
+            item = item.relief();
+        } else {
+            item = item.manageable();
+        }
         let monkey = if item.0 % self.test == 0 {
             self.if_true
         } else {
@@ -115,10 +142,10 @@ impl Monkey {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-struct Item(i32);
+struct Item(i64);
 
-impl From<i32> for Item {
-    fn from(inner: i32) -> Self {
+impl From<i64> for Item {
+    fn from(inner: i64) -> Self {
         Self(inner)
     }
 }
@@ -128,15 +155,21 @@ impl FromStr for Item {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let inner = s
-            .parse::<i32>()
-            .map_err(|_| "Failed to parse item as i32")?;
+            .parse::<i64>()
+            .map_err(|_| "Failed to parse item as i64")?;
         Ok(Self(inner))
     }
 }
 
 impl Item {
+    const MOD: i64 = 2 * 3 * 5 * 7 * 11 * 13 * 17 * 19;
+
     pub fn relief(self) -> Item {
         Item(self.0 / 3)
+    }
+
+    pub fn manageable(self) -> Item {
+        Item(self.0 % Self::MOD)
     }
 }
 
@@ -162,8 +195,8 @@ impl FromStr for OtherMonkey {
 
 #[derive(Copy, Clone)]
 enum Operation {
-    Add(i32),
-    Multiply(i32),
+    Add(i64),
+    Multiply(i64),
     Square,
 }
 
@@ -218,7 +251,7 @@ mod test {
             inspected: 0,
         };
 
-        let throws = monkey.turn();
+        let throws = monkey.turn(Worry::Regular);
         assert_eq!(
             throws,
             vec![
@@ -240,5 +273,58 @@ mod test {
         let monkeys = parse_input(include_str!("example.txt")).unwrap();
         let result = part_1(monkeys);
         assert_eq!(result, 10605);
+    }
+
+    #[test]
+    fn test_part_2_after_1_round() {
+        let mut monkeys = parse_input(include_str!("example.txt")).unwrap();
+        round(&mut monkeys, Worry::Extreme);
+        assert_eq!(monkeys[0].inspected, 2);
+        assert_eq!(monkeys[1].inspected, 4);
+        assert_eq!(monkeys[2].inspected, 3);
+        assert_eq!(monkeys[3].inspected, 6);
+    }
+
+    #[test]
+    fn test_part_2_after_20_rounds() {
+        let mut monkeys = parse_input(include_str!("example.txt")).unwrap();
+        for _ in 0..20 {
+            round(&mut monkeys, Worry::Extreme);
+        }
+        assert_eq!(monkeys[0].inspected, 99);
+        assert_eq!(monkeys[1].inspected, 97);
+        assert_eq!(monkeys[2].inspected, 8);
+        assert_eq!(monkeys[3].inspected, 103);
+    }
+
+    #[test]
+    fn test_part_2_after_1000_rounds() {
+        let mut monkeys = parse_input(include_str!("example.txt")).unwrap();
+        for _ in 0..1000 {
+            round(&mut monkeys, Worry::Extreme);
+        }
+        assert_eq!(monkeys[0].inspected, 5204);
+        assert_eq!(monkeys[1].inspected, 4792);
+        assert_eq!(monkeys[2].inspected, 199);
+        assert_eq!(monkeys[3].inspected, 5192);
+    }
+
+    #[test]
+    fn test_part_2_after_7000_rounds() {
+        let mut monkeys = parse_input(include_str!("example.txt")).unwrap();
+        for _ in 0..7_000 {
+            round(&mut monkeys, Worry::Extreme);
+        }
+        assert_eq!(monkeys[0].inspected, 36508);
+        assert_eq!(monkeys[1].inspected, 33488);
+        assert_eq!(monkeys[2].inspected, 1360);
+        assert_eq!(monkeys[3].inspected, 36400);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let monkeys = parse_input(include_str!("example.txt")).unwrap();
+        let result = part_2(monkeys);
+        assert_eq!(result, 2713310158);
     }
 }
