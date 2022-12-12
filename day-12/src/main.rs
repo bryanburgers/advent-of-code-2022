@@ -4,6 +4,8 @@ fn main() {
     let grid = Grid::parse(include_str!("input.txt")).unwrap();
     let result = part_1(&grid);
     println!("{result}");
+    let result = part_2(&grid);
+    println!("{result}");
 }
 
 fn part_1(grid: &Grid) -> usize {
@@ -13,6 +15,20 @@ fn part_1(grid: &Grid) -> usize {
         let steps = path.len() - 1;
         if steps < smallest {
             smallest = steps
+        }
+    }
+    smallest
+}
+
+fn part_2(grid: &Grid) -> usize {
+    let mut smallest = grid.width * grid.height + 2;
+    for low in grid.lows() {
+        let pathfinder = Pathfinder::new_with_start(grid, low);
+        for path in pathfinder {
+            let steps = path.len() - 1;
+            if steps < smallest {
+                smallest = steps
+            }
         }
     }
     smallest
@@ -52,6 +68,21 @@ impl Grid {
         let from = self.at(from);
         let to = self.at(to);
         from > to || to - from <= 1
+    }
+
+    pub fn lows(&self) -> Vec<Point> {
+        let mut lows = Vec::new();
+        for (y, row) in self.inner.iter().enumerate() {
+            for (x, val) in row.iter().enumerate() {
+                if *val == b'a' {
+                    lows.push(Point {
+                        x: x as i32,
+                        y: y as i32,
+                    });
+                }
+            }
+        }
+        lows
     }
 
     fn parse(input: &str) -> Result<Self, &'static str> {
@@ -134,10 +165,14 @@ struct Pathfinder<'a> {
 
 impl<'a> Pathfinder<'a> {
     pub fn new(grid: &'a Grid) -> Self {
+        Self::new_with_start(grid, grid.start)
+    }
+
+    pub fn new_with_start(grid: &'a Grid, start: Point) -> Self {
         Self {
             grid,
-            shortest_path_so_far: HashMap::from([(grid.start, 1)]),
-            stack: vec![(grid.start, DirectionIterator::default())],
+            shortest_path_so_far: HashMap::from([(start, 1)]),
+            stack: vec![(start, DirectionIterator::default())],
         }
     }
 }
@@ -229,5 +264,12 @@ mod tests {
         let grid = Grid::parse(include_str!("example.txt")).unwrap();
         let steps = part_1(&grid);
         assert_eq!(steps, 31);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let grid = Grid::parse(include_str!("example.txt")).unwrap();
+        let steps = part_2(&grid);
+        assert_eq!(steps, 29);
     }
 }
