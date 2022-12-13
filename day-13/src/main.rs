@@ -8,6 +8,8 @@ fn main() {
     let input = parse(include_str!("input.txt")).unwrap();
     let result = part_1(&input);
     println!("{result}");
+    let result = part_2(&input);
+    println!("{result}");
 }
 
 fn part_1(input: &[(Packet, Packet)]) -> usize {
@@ -24,6 +26,26 @@ fn part_1(input: &[(Packet, Packet)]) -> usize {
         }
     }
     sum
+}
+
+fn part_2(input: &[(Packet, Packet)]) -> usize {
+    let mut vec = Vec::with_capacity(input.len() * 2);
+    for item in input {
+        vec.push(&item.0);
+        vec.push(&item.1);
+    }
+    let marker1 = "[[2]]".parse().unwrap();
+    let marker2 = "[[6]]".parse().unwrap();
+    vec.push(&marker1);
+    vec.push(&marker2);
+    vec.sort();
+
+    vec.into_iter()
+        .enumerate()
+        .map(|(idx, val)| (idx + 1, val))
+        .filter(|(_, val)| *val == &marker1 || *val == &marker2)
+        .map(|(idx, _)| idx)
+        .product()
 }
 
 fn parse(input: &str) -> Result<Vec<(Packet, Packet)>, &'static str> {
@@ -44,7 +66,7 @@ fn parse(input: &str) -> Result<Vec<(Packet, Packet)>, &'static str> {
     Ok(vec)
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 enum Packet {
     Int(u8),
     List(Vec<Packet>),
@@ -179,5 +201,12 @@ mod tests {
         let input = parse(include_str!("example.txt")).unwrap();
         let result = part_1(&input);
         assert_eq!(result, 13);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = parse(include_str!("example.txt")).unwrap();
+        let result = part_2(&input);
+        assert_eq!(result, 140);
     }
 }
