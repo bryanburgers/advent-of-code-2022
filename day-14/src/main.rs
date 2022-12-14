@@ -17,6 +17,8 @@ fn main() {
         .unwrap();
     let result = part_1(&paths);
     println!("{result}");
+    let result = part_2(&paths);
+    println!("{result}");
 }
 
 fn part_1(paths: &[RockPath]) -> usize {
@@ -46,6 +48,45 @@ fn part_1(paths: &[RockPath]) -> usize {
             break;
         }
     }
+}
+
+fn part_2(paths: &[RockPath]) -> usize {
+    let mut cave = Cave::default();
+    for path in paths {
+        for point in path.clone() {
+            cave.set_material(point, Material::Rock);
+        }
+    }
+
+    let mut resting = 0;
+    'outer: loop {
+        let mut sand = Point { x: 500, y: 0 };
+        'sanddrop: loop {
+            if sand.y > cave.max_rock() {
+                cave.set_material(sand, Material::Sand);
+                resting += 1;
+                if sand.y == 0 {
+                    break 'outer;
+                }
+                break;
+            }
+            for possible_drop in sand.possible_drops() {
+                if cave.get_material(possible_drop).is_none() {
+                    sand = possible_drop;
+                    continue 'sanddrop;
+                }
+            }
+            // The sand has come to rest!
+            cave.set_material(sand, Material::Sand);
+            resting += 1;
+            if sand.y == 0 {
+                break 'outer;
+            }
+            break;
+        }
+    }
+
+    resting
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -221,5 +262,18 @@ mod tests {
             .unwrap();
         let result = part_1(&paths);
         assert_eq!(result, 24);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = include_str!("example.txt");
+        let paths = input
+            .trim()
+            .lines()
+            .map(|line| line.parse::<RockPath>())
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let result = part_2(&paths);
+        assert_eq!(result, 93);
     }
 }
