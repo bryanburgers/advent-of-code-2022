@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use std::{collections::HashMap, fmt::Debug, str::FromStr};
+use std::{collections::HashMap, fmt::Debug, ops::RangeInclusive, str::FromStr};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -11,6 +11,8 @@ fn main() {
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
     let result = part_1(&pairs, 2_000_000);
+    println!("{result}");
+    let result = part_2(&pairs, 4_000_000);
     println!("{result}");
 }
 
@@ -31,6 +33,42 @@ fn part_1(input: &[Pair], row: i32) -> usize {
         // .filter(|(pt, _)| pt.y == row)
         .filter(|(_, occupied)| *occupied != Occupied::Beacon)
         .count()
+}
+
+fn part_2(input: &[Pair], size: i32) -> i64 {
+    let now = std::time::Instant::now();
+    let target_range = Range {
+        start: 0,
+        end: size,
+    };
+    for y in 0..=size {
+        let mut ranges = Ranges::default();
+        for pair in input {
+            let sensor = pair.sensor;
+            let beacon = pair.beacon;
+            if let Some(range) = sensor.range_on_row(beacon, y) {
+                ranges.insert(range);
+            }
+        }
+        let ranges = ranges.into_vec();
+        if ranges.len() == 1 && ranges[0].contains(target_range) {
+            continue;
+        }
+
+        // We have a range that isn't completely filled. Let's now inefficiently run the entire row
+        // to see if there are open spots.
+        for x in 0..=size {
+            let point = Point { x, y };
+            if input.iter().any(|pair| pair.contains_point(point)) {
+                continue;
+            }
+
+            let missing_beacon = Beacon::from(point);
+            return missing_beacon.tuning_frequency();
+        }
+    }
+
+    panic!("Did not find point");
 }
 
 #[derive(Copy, Clone)]
@@ -64,6 +102,26 @@ impl Sensor {
         let manhatten_distance = self.distance_to_beacon(beacon);
         CoveredAreaOnRowIterator::new(*self, manhatten_distance, row)
     }
+
+    fn range_on_row(&self, beacon: Beacon, row: i32) -> Option<Range> {
+        let distance = self.distance_to_beacon(beacon);
+
+        let mut mid_point = self.point();
+        mid_point.y = row;
+        let distance_to_point = self.point().manhatten_distance_to(mid_point);
+        if distance_to_point > distance {
+            None
+        } else {
+            let diff = distance - distance_to_point;
+
+            let start_point = mid_point.left(diff);
+            let end_point = mid_point.right(diff);
+            Some(Range {
+                start: start_point.x,
+                end: end_point.x,
+            })
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -78,6 +136,10 @@ impl From<Point> for Beacon {
 impl Beacon {
     pub fn point(&self) -> Point {
         self.0
+    }
+
+    pub fn tuning_frequency(&self) -> i64 {
+        self.0.x as i64 * 4_000_000 + self.0.y as i64
     }
 }
 
@@ -270,6 +332,18 @@ struct Pair {
     beacon: Beacon,
 }
 
+impl Pair {
+    pub fn new(sensor: Sensor, beacon: Beacon) -> Self {
+        Self { sensor, beacon }
+    }
+
+    pub fn contains_point(&self, point: Point) -> bool {
+        let distance_to_beacon = self.sensor.distance_to_beacon(self.beacon);
+        let distance_to_point = self.sensor.distance_to_point(point);
+        distance_to_point <= distance_to_beacon
+    }
+}
+
 impl FromStr for Pair {
     type Err = &'static str;
 
@@ -314,7 +388,78 @@ impl FromStr for Pair {
             y: beacon_y,
         }
         .into();
-        Ok(Pair { sensor, beacon })
+        Ok(Pair::new(sensor, beacon))
+    }
+}
+
+#[derive(Copy, Clone)]
+struct Range {
+    start: i32,
+    end: i32,
+}
+
+impl Debug for Range {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.start.fmt(f)?;
+        f.write_str("→")?;
+        self.end.fmt(f)?;
+        Ok(())
+    }
+}
+
+impl Range {
+    pub fn contains(self, other: Range) -> bool {
+        self.start <= other.start && self.end >= other.end
+    }
+
+    pub fn overlaps(self, other: Range) -> bool {
+        (self.start <= other.start && other.start <= self.end)
+            || (self.start <= other.end && other.end <= self.end)
+            || self.contains(other)
+            || other.contains(self)
+    }
+
+    pub fn intersect(self, other: Range) -> Option<Range> {
+        if self.overlaps(other) {
+            Some(Range {
+                start: std::cmp::min(self.start, other.start),
+                end: std::cmp::max(self.end, other.end),
+            })
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Default)]
+struct Ranges {
+    ranges: Vec<Range>,
+}
+
+impl Ranges {
+    pub fn insert(&mut self, range: Range) {
+        let mut range = range;
+        loop {
+            let mut combined = false;
+            let mut new_vec = Vec::with_capacity(self.ranges.len());
+            for existing_range in std::mem::replace(&mut self.ranges, new_vec) {
+                if let Some(intersection) = range.intersect(existing_range) {
+                    combined = true;
+                    range = intersection;
+                } else {
+                    self.ranges.push(existing_range);
+                }
+            }
+
+            if !combined {
+                break;
+            }
+        }
+        self.ranges.push(range);
+    }
+
+    pub fn into_vec(self) -> Vec<Range> {
+        self.ranges
     }
 }
 
@@ -397,5 +542,27 @@ mod tests {
             .unwrap();
         let result = part_1(&pairs, 10);
         assert_eq!(result, 26);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = include_str!("example.txt");
+        let pairs = input
+            .trim()
+            .lines()
+            .map(|line| line.parse::<Pair>())
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let result = part_2(&pairs, 20);
+        assert_eq!(result, 56000011);
+    }
+
+    #[test]
+    fn test_ranges() {
+        let mut ranges = Ranges::default();
+        ranges.insert(Range { start: 0, end: 2 });
+        ranges.insert(Range { start: 4, end: 6 });
+        ranges.insert(Range { start: 2, end: 4 });
+        assert_eq!(ranges.ranges.len(), 1);
     }
 }
