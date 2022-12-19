@@ -10,6 +10,8 @@ fn main() {
         .unwrap();
     let result = part_1(&input);
     println!("{result}");
+    let result = part_2(&input);
+    println!("{result}");
 }
 
 fn part_1(input: &[Point]) -> usize {
@@ -24,6 +26,53 @@ fn part_1(input: &[Point]) -> usize {
         }
     }
     total_sides - adjacent_sides
+}
+
+fn part_2(input: &[Point]) -> usize {
+    let mut min = Point { x: 1, y: 1, z: 1 };
+    let mut max = Point { x: 1, y: 1, z: 1 };
+    for point in input {
+        min.x = std::cmp::min(point.x, min.x);
+        min.y = std::cmp::min(point.y, min.y);
+        min.z = std::cmp::min(point.z, min.z);
+        max.x = std::cmp::max(point.x, max.x);
+        max.y = std::cmp::max(point.y, max.y);
+        max.z = std::cmp::max(point.z, max.z);
+    }
+
+    min.x -= 1;
+    min.y -= 1;
+    min.z -= 1;
+    max.x += 1;
+    max.y += 1;
+    max.z += 1;
+
+    let mut count = 0;
+
+    let droplet = input.iter().copied().collect::<HashSet<Point>>();
+
+    let mut seen = HashSet::new();
+    let mut stack = vec![min];
+
+    while let Some(item) = stack.pop() {
+        if seen.contains(&item) {
+            continue;
+        }
+        seen.insert(item);
+        for adjacent in item
+            .adjacent()
+            .into_iter()
+            .filter(|adjacent| adjacent.within_box(min, max))
+        {
+            if droplet.contains(&adjacent) {
+                count += 1;
+            } else {
+                stack.push(adjacent);
+            }
+        }
+    }
+
+    count
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
@@ -68,6 +117,12 @@ impl Point {
             },
         ]
     }
+
+    pub fn within_box(&self, min: Point, max: Point) -> bool {
+        (min.x <= self.x && self.x <= max.x)
+            && (min.y <= self.y && self.y <= max.y)
+            && (min.z <= self.z && self.z <= max.z)
+    }
 }
 
 impl FromStr for Point {
@@ -103,5 +158,18 @@ mod tests {
             .unwrap();
         let result = part_1(&input);
         assert_eq!(result, 64);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = include_str!("example.txt");
+        let input = input
+            .trim()
+            .lines()
+            .map(|line| line.parse::<Point>())
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let result = part_2(&input);
+        assert_eq!(result, 58);
     }
 }
